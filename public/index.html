@@ -5,6 +5,15 @@
     <title>Photo Booth</title>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
+    </div>
+    <script src="camera.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('webcam');
+            if (typeof startCamera !== 'undefined') startCamera(video);
+        });
+    </script>
 </body>
 </html>
