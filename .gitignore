@@ -1,1 +1,9 @@
 node_modules/
+.superpowers/
+docs/superpowers/
+.agents/
+initial-inspiration.txt
+.env
+*.log
+Thumbs.db
+.DS_Store
