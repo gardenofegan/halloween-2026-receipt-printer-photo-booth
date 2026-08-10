@@ -29,6 +29,9 @@ async function printImage(base64Data) {
             
             escpos.Image.load(buffer, mimeType, (image) => {
                 try {
+                    if (!image || image instanceof Error) {
+                        return reject(image || new Error('Failed to load image'));
+                    }
                     device.open((error) => {
                         if (error) {
                             try {

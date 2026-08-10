@@ -112,12 +112,29 @@ describe('Print API and Service', () => {
             escpos.USB = escposUsbMock;
             
             jest.spyOn(escpos, 'Printer').mockImplementation(() => mockPrinter);
-            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb({}));
+            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb({ toRaster: jest.fn() }));
 
             const printService = require('../print-service');
             await expect(printService.printImage('data:image/jpeg;base64,abc12345')).rejects.toThrow('Open failed');
             expect(mockDevice.close).toHaveBeenCalled();
             expect(escpos.Image.load).toHaveBeenCalledWith(expect.any(Buffer), 'image/jpeg', expect.any(Function));
+        });
+
+        it('should reject if Image.load yields an error or invalid image', async () => {
+            const escpos = require('escpos');
+            
+            const mockDevice = {
+                open: jest.fn(),
+                close: jest.fn()
+            };
+            const escposUsbMock = jest.fn(() => mockDevice);
+            escpos.USB = escposUsbMock;
+
+            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb(new Error('Corrupt image')));
+
+            const printService = require('../print-service');
+            await expect(printService.printImage('data:image/png;base64,invalid')).rejects.toThrow('Corrupt image');
+            expect(mockDevice.open).not.toHaveBeenCalled();
         });
     });
 });
