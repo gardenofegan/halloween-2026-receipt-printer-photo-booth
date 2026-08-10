@@ -1,13 +1,31 @@
 const express = require('express');
 const path = require('path');
-const app = express();
+const { printImage } = require('./print-service');
 
+const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json({ limit: '10mb' }));
+
+app.post('/print', async (req, res) => {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) {
+        return res.status(400).json({ error: 'Missing image data' });
+    }
+    
+    try {
+        await printImage(imageBase64);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Print error:', error);
+        res.status(500).json({ error: 'Failed to print' });
+    }
+});
+
+const port = process.env.PORT || 3000;
 
 if (require.main === module) {
-    const port = 3000;
     app.listen(port, () => {
-        console.log(`Server listening on port ${port}`);
+        console.log(`Server running at http://localhost:${port}`);
     });
 }
 
