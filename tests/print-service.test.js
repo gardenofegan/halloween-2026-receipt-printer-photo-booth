@@ -32,6 +32,17 @@ describe('Print API and Service', () => {
                 .set('Content-Type', 'application/json');
                 
             expect(response.status).toBe(400);
+            expect(response.body).toEqual({ error: 'Missing or invalid image data' });
+        });
+
+        it('should return 400 if image data is not a string', async () => {
+            const response = await request(app)
+                .post('/print')
+                .send({ imageBase64: { invalid: true } })
+                .set('Content-Type', 'application/json');
+                
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ error: 'Missing or invalid image data' });
         });
 
         it('should return 500 if printService throws error', async () => {
@@ -74,6 +85,39 @@ describe('Print API and Service', () => {
             expect(result).toBe(true);
             expect(consoleWarnSpy).toHaveBeenCalled();
             consoleWarnSpy.mockRestore();
+        });
+    });
+
+    describe('printService device error handling and mime type support', () => {
+        beforeEach(() => {
+            jest.resetModules();
+            jest.unmock('../print-service');
+        });
+
+        it('should close USB device if device.open fails and pass extracted MIME type', async () => {
+            const escpos = require('escpos');
+            
+            const mockDevice = {
+                open: jest.fn((cb) => cb(new Error('Open failed'))),
+                close: jest.fn()
+            };
+            const mockPrinter = {
+                align: jest.fn().mockReturnThis(),
+                raster: jest.fn().mockReturnThis(),
+                cut: jest.fn().mockReturnThis(),
+                close: jest.fn().mockReturnThis()
+            };
+
+            const escposUsbMock = jest.fn(() => mockDevice);
+            escpos.USB = escposUsbMock;
+            
+            jest.spyOn(escpos, 'Printer').mockImplementation(() => mockPrinter);
+            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb({}));
+
+            const printService = require('../print-service');
+            await expect(printService.printImage('data:image/jpeg;base64,abc12345')).rejects.toThrow('Open failed');
+            expect(mockDevice.close).toHaveBeenCalled();
+            expect(escpos.Image.load).toHaveBeenCalledWith(expect.any(Buffer), 'image/jpeg', expect.any(Function));
         });
     });
 });

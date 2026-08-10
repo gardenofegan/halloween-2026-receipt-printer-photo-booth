@@ -8,8 +8,8 @@ app.use(express.json({ limit: '10mb' }));
 
 app.post('/print', async (req, res) => {
     const { imageBase64 } = req.body;
-    if (!imageBase64) {
-        return res.status(400).json({ error: 'Missing image data' });
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+        return res.status(400).json({ error: 'Missing or invalid image data' });
     }
     
     try {
