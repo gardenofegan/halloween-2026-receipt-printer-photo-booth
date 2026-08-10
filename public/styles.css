@@ -67,7 +67,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 800px;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1 / 1;
     max-height: 55vh; /* Keep it constrained vertically */
     background: #000;
     border: 1.5vmin solid #3b2a1a;

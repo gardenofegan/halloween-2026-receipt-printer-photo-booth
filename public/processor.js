@@ -54,26 +54,40 @@ function processImage(source, targetCanvas, frameImage) {
     
     const srcWidth = source.width || source.videoWidth || 0;
     const srcHeight = source.height || source.videoHeight || 0;
-    
-    // Guard against uninitialized or zero-dimension source
     if (!srcWidth || !srcHeight) return;
 
+    // Use a fixed 512x512 square canvas for the thermal printer
+    const canvasSize = 512;
     const ctx = targetCanvas.getContext('2d');
-    targetCanvas.width = srcWidth;
-    targetCanvas.height = srcHeight;
+    targetCanvas.width = canvasSize;
+    targetCanvas.height = canvasSize;
     
-    // Draw mirrored source video/canvas
-    ctx.translate(srcWidth, 0);
+    // Fill white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+    // Calculate source crop for 1:1 aspect ratio (center crop from video)
+    const size = Math.min(srcWidth, srcHeight);
+    const sx = (srcWidth - size) / 2;
+    const sy = (srcHeight - size) / 2;
+
+    // Bounding box for the photo inside the WANTED poster
+    const destX = canvasSize * 0.28;
+    const destY = canvasSize * 0.28;
+    const destW = canvasSize * 0.44;
+    const destH = canvasSize * 0.44;
+
+    // Draw mirrored source video/canvas into the bounding box
+    ctx.save();
+    ctx.translate(destX + destW, destY);
     ctx.scale(-1, 1);
-    ctx.drawImage(source, 0, 0, srcWidth, srcHeight);
-    
-    // Reset transform
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(source, sx, sy, size, size, 0, 0, destW, destH);
+    ctx.restore();
 
     // Draw frame overlay BEFORE dithering so frame artwork is dithered along with photo
     if (frameImage && frameImage.complete) {
         ctx.globalCompositeOperation = 'multiply';
-        ctx.drawImage(frameImage, 0, 0, srcWidth, srcHeight);
+        ctx.drawImage(frameImage, 0, 0, canvasSize, canvasSize);
         ctx.globalCompositeOperation = 'source-over';
     }
     

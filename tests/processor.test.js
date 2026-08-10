@@ -57,6 +57,9 @@ describe('Image Processing', () => {
     it('should draw frame overlay BEFORE dithering image data', () => {
         const executionOrder = [];
         const fakeCtx = {
+            fillRect: jest.fn(),
+            save: jest.fn(),
+            restore: jest.fn(),
             translate: jest.fn(),
             scale: jest.fn(),
             drawImage: jest.fn((img) => {
@@ -89,8 +92,11 @@ describe('Image Processing', () => {
         expect(executionOrder).toEqual(['drawSource', 'drawFrame', 'getImageData', 'putImageData']);
     });
 
-    it('should support HTMLCanvasElement source using width/height', () => {
+    it('should set canvas size to 512x512 for the thermal printer', () => {
         const fakeCtx = {
+            fillRect: jest.fn(),
+            save: jest.fn(),
+            restore: jest.fn(),
             translate: jest.fn(),
             scale: jest.fn(),
             drawImage: jest.fn(),
@@ -106,7 +112,7 @@ describe('Image Processing', () => {
 
         processImage(fakeSourceCanvas, fakeTargetCanvas, null);
 
-        expect(fakeTargetCanvas.width).toBe(100);
-        expect(fakeTargetCanvas.height).toBe(100);
+        expect(fakeTargetCanvas.width).toBe(512);
+        expect(fakeTargetCanvas.height).toBe(512);
     });
 });
