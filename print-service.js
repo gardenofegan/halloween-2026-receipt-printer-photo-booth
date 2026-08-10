@@ -46,6 +46,8 @@ async function printImage(base64Data) {
                             printer
                                 .align('ct')
                                 .raster(image, 'dwdw') // Double width, double height
+                                .text('HVL Hayride 2026')
+                                .text('') // Blank line for spacing
                                 .cut()
                                 .close();
                             resolve(true);

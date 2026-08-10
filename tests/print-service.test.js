@@ -104,6 +104,7 @@ describe('Print API and Service', () => {
             const mockPrinter = {
                 align: jest.fn().mockReturnThis(),
                 raster: jest.fn().mockReturnThis(),
+                text: jest.fn().mockReturnThis(),
                 cut: jest.fn().mockReturnThis(),
                 close: jest.fn().mockReturnThis()
             };
