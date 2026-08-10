@@ -1,32 +1,154 @@
-body, html {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    overflow: hidden; background: #000; font-family: sans-serif;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: url('saloon_bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #f4d093; /* Sepia/gold text color */
+    font-family: 'Rye', cursive;
+    overflow: hidden; /* Kiosk mode - no scrolling */
     user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
+
 #app {
-    position: relative; width: 100%; height: 100%;
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    height: 100vh;
+    padding: 20px;
+    position: relative;
 }
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+}
+
+.title {
+    font-family: 'Sancreek', cursive;
+    font-size: 8rem;
+    color: #ffecd2;
+    letter-spacing: 5px;
+    line-height: 1;
+}
+
+.subtitle {
+    font-size: 2.5rem;
+    letter-spacing: 3px;
+    color: #e5b05c;
+}
+
+.photo-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+/* Wanted Poster style frame on screen */
+.camera-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    background: #000;
+    border: 20px solid #3b2a1a;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 50px rgba(0,0,0,0.8);
+    overflow: hidden;
+}
+
+/* The actual video feed inside the frame */
 #webcam {
-    width: 100%; height: 100%; object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: sepia(0.8) contrast(1.2) brightness(0.9);
 }
+
+/* The preview canvas */
 #preview-canvas {
-    display: none;
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    z-index: 5;
-    background: white;
+    background: white; /* B&W dithering will show on white */
 }
-#capture-btn {
-    position: absolute; bottom: 50px; padding: 20px 40px;
-    font-size: 24px; border-radius: 10px; cursor: pointer;
-    background: #ff5722; color: white; border: none; z-index: 10;
+
+/* Flash effect */
+#flash-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease-out;
 }
+
+.flash-active {
+    opacity: 1 !important;
+}
+
+/* Status Text Overlay */
 #status-overlay {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 80px; color: white; text-shadow: 2px 2px 10px #000; z-index: 20;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8rem;
+    font-family: 'Sancreek', cursive;
+    color: #fff;
+    text-shadow: 0 0 20px #000, 4px 4px 0px #000;
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Big western style button */
+.western-btn {
+    font-family: 'Rye', cursive;
+    font-size: 3rem;
+    padding: 20px 60px;
+    background: linear-gradient(to bottom, #8b4513, #5a2e0c);
+    color: #ffecd2;
+    border: 4px solid #3b2a1a;
+    border-radius: 15px;
+    box-shadow: 0 8px 0 #2a1605, 0 15px 20px rgba(0,0,0,0.6);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+.western-btn:active {
+    transform: translateY(8px);
+    box-shadow: 0 0px 0 #2a1605, 0 5px 10px rgba(0,0,0,0.6);
+}
+
+.western-btn:disabled {
+    background: #555;
+    color: #999;
+    box-shadow: 0 8px 0 #333;
+    cursor: not-allowed;
+    transform: translateY(0);
 }

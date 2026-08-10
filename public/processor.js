@@ -72,7 +72,9 @@ function processImage(source, targetCanvas, frameImage) {
 
     // Draw frame overlay BEFORE dithering so frame artwork is dithered along with photo
     if (frameImage && frameImage.complete) {
+        ctx.globalCompositeOperation = 'multiply';
         ctx.drawImage(frameImage, 0, 0, srcWidth, srcHeight);
+        ctx.globalCompositeOperation = 'source-over';
     }
     
     // Get data, apply dithering to entire composite frame, and put back

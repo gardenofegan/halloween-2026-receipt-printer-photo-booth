@@ -2,17 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Photo Booth</title>
+    <title>Photo Booth - Dirty Saloon</title>
+    <!-- Wild West Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Sancreek&family=Rye&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app">
-        <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
-        <canvas id="preview-canvas"></canvas>
-        <img id="frame-img" src="frame.png" style="display:none;">
-        <div id="status-overlay" style="display: none;"></div>
-        <button id="capture-btn">Take Photo</button>
+        <header class="header">
+            <h1 class="title">WANTED</h1>
+            <h2 class="subtitle">DEAD OR ALIVE</h2>
+        </header>
+
+        <div class="photo-area">
+            <!-- Decorative frame container -->
+            <div class="camera-container">
+                <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
+                <canvas id="preview-canvas" style="display:none;"></canvas>
+                
+                <!-- Flash effect -->
+                <div id="flash-overlay"></div>
+                
+                <div id="status-overlay" style="display: none;"></div>
+            </div>
+            
+            <img id="frame-img" src="wanted_frame.jpg" style="display:none;" crossorigin="anonymous">
+        </div>
+
+        <div class="controls">
+            <button id="capture-btn" class="western-btn">TAKE MUGSHOT</button>
+        </div>
     </div>
+    
     <script src="camera.js"></script>
     <script src="processor.js"></script>
     <script src="app.js"></script>
