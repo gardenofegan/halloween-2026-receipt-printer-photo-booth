@@ -5,11 +5,11 @@ async function printImage(base64Data) {
     return new Promise((resolve, reject) => {
         try {
             // Extract MIME type if present in data URI, default to image/png
-            const mimeMatch = base64Data.match(/^data:(image\/\w+);base64,/);
+            const mimeMatch = base64Data.match(/^data:(image\/\w+);base64,/i);
             const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
 
             // Remove header if present
-            const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, "");
+            const base64Image = base64Data.replace(/^data:image\/\w+;base64,/i, "");
             const buffer = Buffer.from(base64Image, 'base64');
             
             // Note: in a real environment without a printer plugged in, 
@@ -30,6 +30,7 @@ async function printImage(base64Data) {
             escpos.Image.load(buffer, mimeType, (image) => {
                 try {
                     if (!image || image instanceof Error) {
+                        try { device.close(); } catch (_) {}
                         return reject(image || new Error('Failed to load image'));
                     }
                     device.open((error) => {
