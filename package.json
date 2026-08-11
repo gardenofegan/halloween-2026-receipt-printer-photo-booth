@@ -13,13 +13,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "escpos": "^3.0.0-alpha.6",
-    "escpos-usb": "^3.0.0-alpha.4",
-    "express": "^5.2.1"
+    "@thiagoelg/node-printer": "^0.6.2",
+    "express": "^5.2.1",
+    "node-thermal-printer": "^4.6.0"
   },
   "devDependencies": {
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "supertest": "^7.2.2"
+  },
+  "overrides": {
+    "request": "npm:empty-npm-package@1.0.0",
+    "usb": "^1.7.3"
   }
 }

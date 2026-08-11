@@ -1,10 +1,20 @@
 const express = require('express');
 const path = require('path');
-const { printImage } = require('./print-service');
+const { printImage, getPrinterStatus } = require('./print-service');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10mb' }));
+
+app.get('/status', async (req, res) => {
+    try {
+        const status = await getPrinterStatus();
+        res.json({ status });
+    } catch (error) {
+        console.error('Status error:', error);
+        res.status(500).json({ status: 'Offline' });
+    }
+});
 
 app.post('/print', async (req, res) => {
     const { imageBase64 } = req.body || {};

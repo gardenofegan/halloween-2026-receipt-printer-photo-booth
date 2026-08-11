@@ -66,20 +66,23 @@ describe('Print API and Service', () => {
         beforeEach(() => {
             jest.resetModules();
             jest.unmock('../print-service');
-            printService = require('../print-service');
-            jest.useFakeTimers();
-        });
-
-        afterEach(() => {
-            jest.useRealTimers();
         });
 
         it('should fallback to simulation mode when printer is not connected', async () => {
+            jest.doMock('node-thermal-printer', () => {
+                return {
+                    printer: jest.fn().mockImplementation(() => ({
+                        isPrinterConnected: jest.fn().mockResolvedValue(false)
+                    })),
+                    types: { EPSON: 'epson' }
+                };
+            });
+            const printServiceLocal = require('../print-service');
+            
             const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
             
-            const printPromise = printService.printImage('data:image/png;base64,iVBORw0KGgo...');
+            const printPromise = printServiceLocal.printImage('data:image/png;base64,iVBORw0KGgo...');
             
-            jest.advanceTimersByTime(1000);
             const result = await printPromise;
 
             expect(result).toBe(true);
@@ -88,55 +91,54 @@ describe('Print API and Service', () => {
         });
     });
 
-    describe('printService device error handling and mime type support', () => {
+    describe('printService device error handling', () => {
         beforeEach(() => {
             jest.resetModules();
             jest.unmock('../print-service');
         });
 
-        it('should close USB device if device.open fails and pass extracted MIME type', async () => {
-            const escpos = require('escpos');
-            
-            const mockDevice = {
-                open: jest.fn((cb) => cb(new Error('Open failed'))),
-                close: jest.fn()
-            };
+        it('should reject if printer execute fails', async () => {
             const mockPrinter = {
-                align: jest.fn().mockReturnThis(),
-                raster: jest.fn().mockReturnThis(),
-                text: jest.fn().mockReturnThis(),
-                cut: jest.fn().mockReturnThis(),
-                close: jest.fn().mockReturnThis()
+                isPrinterConnected: jest.fn().mockResolvedValue(true),
+                alignCenter: jest.fn(),
+                printImageBuffer: jest.fn().mockResolvedValue(true),
+                println: jest.fn(),
+                cut: jest.fn(),
+                execute: jest.fn().mockRejectedValue(new Error('Execute failed'))
             };
 
-            const escposUsbMock = jest.fn(() => mockDevice);
-            jest.doMock('escpos-usb', () => escposUsbMock);
-            
-            jest.spyOn(escpos, 'Printer').mockImplementation(() => mockPrinter);
-            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb({ toRaster: jest.fn() }));
+            jest.doMock('node-thermal-printer', () => {
+                return {
+                    printer: jest.fn().mockImplementation(() => mockPrinter),
+                    types: { EPSON: 'epson' }
+                };
+            });
 
             const printService = require('../print-service');
-            await expect(printService.printImage('data:image/jpeg;base64,abc12345')).rejects.toThrow('Open failed');
-            expect(mockDevice.close).toHaveBeenCalled();
-            expect(escpos.Image.load).toHaveBeenCalledWith(expect.any(Buffer), 'image/jpeg', expect.any(Function));
+            await expect(printService.printImage('data:image/jpeg;base64,abc12345')).rejects.toThrow('Execute failed');
+            expect(mockPrinter.printImageBuffer).toHaveBeenCalledWith(expect.any(Buffer));
         });
 
-        it('should reject if Image.load yields an error or invalid image', async () => {
-            const escpos = require('escpos');
-            
-            const mockDevice = {
-                open: jest.fn(),
-                close: jest.fn()
+        it('should reject if printImageBuffer throws an error', async () => {
+            const mockPrinter = {
+                isPrinterConnected: jest.fn().mockResolvedValue(true),
+                alignCenter: jest.fn(),
+                printImageBuffer: jest.fn().mockRejectedValue(new Error('Corrupt image')),
+                println: jest.fn(),
+                cut: jest.fn(),
+                execute: jest.fn()
             };
-            const escposUsbMock = jest.fn(() => mockDevice);
-            jest.doMock('escpos-usb', () => escposUsbMock);
 
-            jest.spyOn(escpos.Image, 'load').mockImplementation((buffer, mime, cb) => cb(new Error('Corrupt image')));
+            jest.doMock('node-thermal-printer', () => {
+                return {
+                    printer: jest.fn().mockImplementation(() => mockPrinter),
+                    types: { EPSON: 'epson' }
+                };
+            });
 
             const printService = require('../print-service');
             await expect(printService.printImage('data:image/png;base64,invalid')).rejects.toThrow('Corrupt image');
-            expect(mockDevice.open).not.toHaveBeenCalled();
-            expect(mockDevice.close).toHaveBeenCalled();
+            expect(mockPrinter.execute).not.toHaveBeenCalled();
         });
     });
 });

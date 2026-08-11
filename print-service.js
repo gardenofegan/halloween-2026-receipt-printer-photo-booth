@@ -1,74 +1,63 @@
-const escpos = require('escpos');
-escpos.USB = require('escpos-usb');
+const ThermalPrinter = require("node-thermal-printer").printer;
+const PrinterTypes = require("node-thermal-printer").types;
 
 async function printImage(base64Data) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
-            // Extract MIME type if present in data URI, default to image/png
-            const mimeMatch = base64Data.match(/^data:(image\/\w+);base64,/i);
-            const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-
             // Remove header if present
             const base64Image = base64Data.replace(/^data:image\/\w+;base64,/i, "");
             const buffer = Buffer.from(base64Image, 'base64');
             
-            // Note: in a real environment without a printer plugged in, 
-            // escpos.USB() will throw an error "No printer found".
-            // For safety, we wrap this in try-catch so the app doesn't crash.
-            let device;
+            let printer = new ThermalPrinter({
+                type: PrinterTypes.EPSON,
+                interface: 'printer:escape_printer', // Connect via standard OS print spooler
+                driver: require('@thiagoelg/node-printer'),
+            });
+
+            // Check if the printer is actually available via OS
+            let isConnected = false;
             try {
-                device = new escpos.USB();
+                isConnected = await printer.isPrinterConnected();
             } catch (err) {
-                console.warn('Printer not found (simulation mode active).', err.message);
+                // node-thermal-printer throws false if not connected
+                isConnected = false;
+            }
+
+            if (!isConnected) {
+                console.warn('Printer not found (simulation mode active).');
                 // Simulate success
                 setTimeout(() => resolve(true), 1000);
                 return;
             }
 
-            const printer = new escpos.Printer(device);
+            printer.alignCenter();
+            // node-thermal-printer supports printing directly from a buffer
+            await printer.printImageBuffer(buffer);
+            printer.cut();
             
-            escpos.Image.load(buffer, mimeType, (image) => {
-                try {
-                    if (!image || image instanceof Error) {
-                        try { device.close(); } catch (_) {}
-                        return reject(image || new Error('Failed to load image'));
-                    }
-                    device.open((error) => {
-                        if (error) {
-                            try {
-                                device.close();
-                            } catch (closeErr) {
-                                // Ignore cleanup close errors
-                            }
-                            return reject(error);
-                        }
-                        try {
-                            printer
-                                .align('ct')
-                                .raster(image, 'dwdw') // Double width, double height
-                                .text('HVL Hayride 2026')
-                                .text('') // Blank line for spacing
-                                .cut()
-                                .close();
-                            resolve(true);
-                        } catch (printErr) {
-                            try {
-                                device.close();
-                            } catch (closeErr) {}
-                            reject(printErr);
-                        }
-                    });
-                } catch (loadErr) {
-                    try {
-                        device.close();
-                    } catch (closeErr) {}
-                    reject(loadErr);
-                }
-            });
+            await printer.execute();
+            resolve(true);
         } catch (error) {
             reject(error);
         }
     });
 }
 
-module.exports = { printImage };
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
+
+async function getPrinterStatus() {
+    try {
+        const { stdout } = await execAsync(`powershell -Command "Get-Printer -Name 'escape_printer' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PrinterStatus"`);
+        const status = stdout.trim();
+        return status ? status : 'Offline';
+    } catch (err) {
+        return 'Offline';
+    }
+}
+
+module.exports = {
+    printImage,
+    getPrinterStatus
+};

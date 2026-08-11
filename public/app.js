@@ -10,10 +10,46 @@ class PhotoBoothApp {
             this.captureBtn = document.getElementById('capture-btn');
             this.statusOverlay = document.getElementById('status-overlay');
             this.flashOverlay = document.getElementById('flash-overlay');
+            this.printerStatusLabel = document.getElementById('printer-status');
 
             if (this.captureBtn) {
                 this.captureBtn.addEventListener('click', () => this.takePhoto());
             }
+
+            // Start polling printer status
+            this.pollPrinterStatus();
+            setInterval(() => this.pollPrinterStatus(), 5000);
+        }
+    }
+
+    async pollPrinterStatus() {
+        if (!this.printerStatusLabel) return;
+        try {
+            const res = await fetch('/status');
+            const data = await res.json();
+            
+            const status = data.status || 'Unknown';
+            if (status === 'Normal') {
+                this.printerStatusLabel.innerText = 'Printer: READY';
+                this.printerStatusLabel.style.color = '#a8e6cf'; // light green
+                this.captureBtn.disabled = this.state !== 'IDLE';
+            } else if (status === 'PaperOut') {
+                this.printerStatusLabel.innerText = 'PRINTER OUT OF PAPER!';
+                this.printerStatusLabel.style.color = '#ff6b6b'; // red
+                this.captureBtn.disabled = true;
+            } else if (status === 'Offline') {
+                this.printerStatusLabel.innerText = 'PRINTER OFFLINE';
+                this.printerStatusLabel.style.color = '#ff6b6b';
+                this.captureBtn.disabled = true;
+            } else {
+                this.printerStatusLabel.innerText = `Printer: ${status}`;
+                this.printerStatusLabel.style.color = '#f4d093'; // default yellow
+                // Don't disable button on unknown statuses, it might just be printing
+            }
+        } catch (err) {
+            this.printerStatusLabel.innerText = 'PRINTER DISCONNECTED';
+            this.printerStatusLabel.style.color = '#ff6b6b';
+            this.captureBtn.disabled = true;
         }
     }
 
